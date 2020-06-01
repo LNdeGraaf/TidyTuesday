@@ -39,35 +39,6 @@ volcano_for_plot <- volcano %>%
 world_map <- map_data("world2") %>%
   filter(long > 60 & long < 340 )
 
-# create plot
-volcano_plot <- ggplot(volcano_for_plot) +
-  # base layer is the world map 
-  geom_polygon(data = world_map, aes(x = long, y = lat, group = group),
-               fill = "palegreen3", # fill
-               colour = "white",    # borders
-               size = 0.2) +
-  # add volcanoes - colour by eruption count
-  geom_point(aes(longitude_new, latitude, colour = eruption_count, text = hover_text), size = 2) +
-  scale_color_gradient(name = "Number of total eruptions", low = alpha("red", 0.8), high = alpha("yellow", 0.5)) +
-  # nice projection
-  coord_map(projection = "mollweide") +
-  guides(colour = guide_legend()) +
-  theme_void(base_family = "IBM Plex Sans") +
-  theme(plot.background = element_rect(fill = "grey100", colour = "grey100"),
-        plot.title = element_markdown(face = "bold", size = rel(1.3), hjust = 0.5),
-        plot.subtitle = element_markdown(size = rel(1.1), hjust = 0.5),
-        plot.caption = element_text(colour = "black", size = 9, hjust = 0.5)) +
-  labs(title = "The Ring of Fire",
-       subtitle = "Total recorded volcanic eruptions. <br>75% of the world's volcanoes are located along this path along the Pacific Ocean <br> characterized by active volcanoes.",
-       caption = "Source: The Smithsonian Institution & National Geographic. Graphic: Louise Martens")
-
-# ggsave(filename = "volcanoes_in_ring_of_fire.png", 
-#        device = "png",
-#        height = 5,
-#        width = 9,
-#        units = "in",
-#        dpi = 600)
-
 (volcano_plot_2 <- ggplot(volcano_for_plot) +
   # base layer is the world map 
   geom_polygon(data = world_map, aes(x = long, y = lat, group = group),
