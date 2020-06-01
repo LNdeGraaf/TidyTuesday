@@ -65,7 +65,14 @@ world_map <- map_data("world2") %>%
        subtitle = "75% of the world's volcanoes are located along this path along the Pacific Ocean characterized by active volcanoes.",
        caption = "Data source: The Smithsonian Institution & National Geographic. Graphic: Louise Martens"))
 
-# wanted to make the plot interactive, but ggplotly doesn't like Mollweide projections...
-volcano_interactive <- ggplotly(volcano_plot_2, tooltip = "hover_text")
-  
+ggsave(filename = "volcanoes_in_ring_of_fire2.png",
+       device = "png",
+       height = 5,
+       width = 9,
+       units = "in",
+       dpi = 600)
+
+# # wanted to make the plot interactive, but ggplotly doesn't like Mollweide projections...
+# volcano_interactive <- ggplotly(volcano_plot_2, tooltip = "hover_text")
+#   
   
