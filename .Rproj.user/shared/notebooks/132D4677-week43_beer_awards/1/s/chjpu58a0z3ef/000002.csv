@@ -1,0 +1,31 @@
+"0","beer_awards <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-20/beer_awards.csv') "
+"2","Parsed with column specification:
+cols(
+  medal = [31mcol_character()[39m,
+  beer_name = [31mcol_character()[39m,
+  brewery = [31mcol_character()[39m,
+  city = [31mcol_character()[39m,
+  state = [31mcol_character()[39m,
+  category = [31mcol_character()[39m,
+  year = [32mcol_double()[39m
+)
+"
+"0","glimpse(beer_awards)"
+"1","Rows: 4,970"
+"1",""
+"1","
+"
+"1","Columns: 7"
+"1",""
+"1","
+"
+"1","$ medal     [3m[38;5;246m<chr>[39m[23m ""Gold"", ""Silver"", ""Bronze"", ""Gold"", ""Silver"", ""Bronze"", ""Gold"", ""Silver"", ""Bronze"", ""Gold"", ""Silver"", ""Gold""...
+$ beer_name [3m[38;5;246m<chr>[39m[23m ""Volksbier Vienna"", ""Oktoberfest"", ""Amber Lager"", ""Lager at World's End"", ""Seismic Tremor"", ""Lite Thinking"",...
+$ brewery   [3m[38;5;246m<chr>[39m[23m ""Wibby Brewing"", ""Founders Brewing Co."", ""Skipping Rock Beer Co."", ""Epidemic Ales"", ""Seismic Brewing Co."", ""...
+$ city      [3m[38;5;246m<chr>[39m[23m ""Longmont"", ""Grand Rapids"", ""Staunton"", ""Concord"", ""Santa Rosa"", ""Lemont"", ""Ventura"", ""San Antonio"", ""Portla...
+$ state     [3m[38;5;246m<chr>[39m[23m ""CO"", ""MI"", ""VA"", ""CA"", ""CA"", ""IL"", ""CA"", ""TX"", ""OR"", ""MO"", ""CO"", ""FL"", ""CO"", ""OR"", ""CA"", ""NM"", ""VA"", ""CA"", ...
+$ category  [3m[38;5;246m<chr>[39m[23m ""American Amber Lager"", ""American Amber Lager"", ""American Amber Lager"", ""American Lager"", ""American Lager"", ...
+$ year      [3m[38;5;246m<dbl>[39m[23m 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, 2020, ..."
+"1",""
+"1","
+"

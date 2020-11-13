@@ -1,0 +1,11 @@
+"0","stats <- datasaurus %>%"
+"0","  group_by(dataset) %>% "
+"0","  summarize("
+"0","    mean_x    = mean(x),"
+"0","    mean_y    = mean(y),"
+"0","    std_dev_x = sd(x),"
+"0","    std_dev_y = sd(y),"
+"0","    corr_x_y  = cor(x, y)) %>% "
+"0","  ungroup()"
+"2","`summarise()` ungrouping output (override with `.groups` argument)
+"

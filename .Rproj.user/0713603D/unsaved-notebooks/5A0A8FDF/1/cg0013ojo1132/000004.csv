@@ -1,0 +1,14 @@
+"0","library(tidyverse)"
+"0","library(cowplot)"
+"0","library(here)"
+"0","library(gganimate)"
+"0","library(gifski)"
+"0",""
+"0","datasaurus <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-13/datasaurus.csv')"
+"2","Parsed with column specification:
+cols(
+  dataset = [31mcol_character()[39m,
+  x = [32mcol_double()[39m,
+  y = [32mcol_double()[39m
+)
+"

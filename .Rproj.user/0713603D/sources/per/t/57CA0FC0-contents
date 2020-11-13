@@ -1,0 +1,126 @@
+---
+title: "Week 42 - Datasaurus dozen"
+author: "Louise Martens"
+date: "20-10-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## The Datasaurus dozen
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r load_data_and_packages, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(cowplot)
+library(here)
+library(gganimate)
+library(gifski)
+library(magick)
+
+datasaurus <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-13/datasaurus.csv')
+
+
+```
+
+```{r get summary statistics}
+stats <- datasaurus %>%
+  group_by(dataset) %>% 
+  summarize(
+    mean_x    = mean(x),
+    mean_y    = mean(y),
+    std_dev_x = sd(x),
+    std_dev_y = sd(y),
+    corr_x_y  = cor(x, y)) %>% 
+  ungroup()
+
+
+```
+
+## Create the plot
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+theme_edges <- theme(axis.title = element_blank(),
+                     axis.ticks = element_blank(),
+                     axis.text = element_blank(),
+                     axis.line = element_blank(),
+                     plot.margin = unit(c(0, 0, 0, 0), "null"))
+
+animation <- transition_states(dataset, 4, 1)
+
+main_plot <- ggplot(datasaurus, aes(x=x, y=y))+
+  geom_point(colour = ifelse(datasaurus$dataset == "dino", "darkgreen", "black"))+
+  theme_classic() +
+  theme(axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        plot.margin = unit(c(0, 0, 0, 0), "null")) +
+  animation + enter_fade() + exit_shrink() + ease_aes('sine-in-out') 
+
+x_density <- ggplot(datasaurus, aes(x = x)) +
+  geom_density(colour = "#FFFFFF", fill = "#3E9B00", alpha = 0.5) +
+  theme_classic() +
+  theme_edges +
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),  
+        plot.background = element_rect(fill = "transparent", colour = NA)) +
+  animation + enter_fade() + exit_shrink() + ease_aes('sine-in-out') +
+  labs(title = 'These data sets have roughly the same\n correlation, mean and SD.',
+          subtitle = 'Visualize your data. It could be a dinosaur.')
+ 
+
+x_boxplot <- ggplot(datasaurus, aes(x = x)) +
+  geom_boxplot(fill = "#3E9B00") +
+  theme_classic() +
+  theme_edges +
+  animation + enter_fade() + exit_shrink() + ease_aes('sine-in-out')
+  
+y_density <- ggplot(datasaurus, aes(y = y)) +
+  geom_density(colour = "#FFFFFF", fill = "#3E9B00", alpha = 0.5) +
+  theme_classic() +
+  theme_edges +
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),  
+        plot.background = element_rect(fill = "transparent", colour = NA)) +
+  animation + enter_fade() + exit_shrink() + ease_aes('sine-in-out')
+
+y_boxplot <- ggplot(datasaurus, aes(y =y)) +
+  geom_boxplot(fill = "#3E9B00") +
+  theme_classic() +
+  theme_edges +
+  animation + enter_fade() + exit_shrink() + ease_aes('sine-in-out')
+
+m_gif <- animate(main_plot, width = 240*2, height = 240*2)
+xd_gif <- animate(x_density, width = 240*2, height = 120*2)
+xb_gif <- animate(x_boxplot, width = 240*2, height = 50*2)
+yd_gif <- animate(y_density, width = 100*2, height = 240*2)
+yb_gif <- animate(y_boxplot, width = 50*2, height = 240*2)
+
+m <- image_read(m_gif)
+xd <- image_read(xd_gif)
+xb <- image_read(xb_gif)
+yb <- image_read(yb_gif)
+yd <- image_read(yd_gif)
+
+
+```
+
+Nu doen we alles bij elkaar.
+
+```{r put it all together}
+combined  <- image_append(c(m[1],yb[1], yd[1]), stack = FALSE)
+new_gif <- image_append(c(xd[1], xb[1], combined), stack = TRUE)
+
+for(i in 2:100){
+  combined <- image_append(c(m[i],yb[i], yd[i]), stack = FALSE)
+  all_combined <- image_append(c(xd[i], xb[i], combined), stack = TRUE)
+  
+  new_gif <- c(new_gif, all_combined)
+}
+
+new_gif
+```

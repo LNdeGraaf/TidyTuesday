@@ -1,0 +1,3 @@
+"0",""
+"0",""
+"0","ggsave('test_beer_map.png',width = 10, height = 7.5, units = 'in')"

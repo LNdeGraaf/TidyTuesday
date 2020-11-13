@@ -1,0 +1,113 @@
+
+# Plot mean metabolite spectrum + sd --------------------------------------
+
+library(tidyverse); library(cowplot)
+
+setwd("D:/Data/OHBM_abstract/FINAL_SAMPLE/MRS_NEW_11_2019/")
+
+lcmodel_data <- read.csv("./MRS_QC/r_spectra_and_fits_to_plot.csv")
+
+# Get IDs for GABA measurements with CRLBs that are too high --------------
+
+final_sample <- read.csv("D:/Data/OHBM_abstract/FINAL_SAMPLE/FINAL_subject_list_Glu.csv") 
+bad_GABA_data <- final_sample %>%
+  filter(crlb_gaba_pgacc > 20) %>%
+  select(Subject) %>%
+  unnest(Subject) 
+bad_GABA_data
+
+# Reshape data and compute mean, sd and residuals for plotting ------------
+
+data_to_plot_test <- lcmodel_data %>%
+  
+  # set bad GABA subjects to NA
+  mutate(GABA = ifelse(subject == "ez57" | subject == "hs63" | subject == "ld98" | subject == "lq97" | subject == "op18", NA_real_, GABA)) %>% 
+  
+  # long format for plot
+  group_by(subject) %>%
+  gather(key = data_type, value = value, -ppm, -subject) %>% 
+  ungroup() %>% 
+  
+  # make labels of factor levels better for plotting
+  mutate(data_type = factor(data_type,
+                            levels = c("fit","raw","GABA","Glu", "residuals"),
+                            labels = c("Fit", "Raw", "GABA", "Glutamate", "Residuals")),
+         subject = factor(subject)) %>%
+
+  # calculate mean and sd of each factor level 
+  group_by(ppm, data_type) %>%
+  mutate(mean_to_plot = mean(value, na.rm = T),
+         sd = sd(value, na.rm = T)) %>%
+  ungroup() %>%
+  
+  # only select columns that are going to be used
+  group_by(subject) %>% 
+  select(subject, ppm, data_type, mean_to_plot, sd) %>%
+  
+  # all subjects have the same value trim down dataset to just one subject (as all subjects have the same values for mean and sd)
+  filter(subject == "ap75") %>% 
+  droplevels()
+
+# Set theme for plot ------------------------------------------------------
+
+theme_spectra <-  theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+                        axis.ticks.y = element_blank(), 
+                        axis.ticks.x = element_line(colour = "grey90"),
+                        axis.ticks.length.x = unit(0.05, "in"),
+                        axis.text.y = element_blank(),
+                        axis.text.x = element_text(size = 12),
+                        axis.title.y = element_blank(),
+                        axis.title.x = element_text(face="bold"),
+                        legend.title = element_blank(),
+                        panel.grid.minor.y=element_blank(),
+                        panel.grid.major.y=element_blank()) 
+
+
+# Plot with full spectrum with Glu and GABA fits below --------------------
+
+spectrum_and_individual_fits <- ggplot(data=data_to_plot_test %>% filter(data_type == "Raw"|data_type == "Fit"), 
+                                       aes(x=ppm, y=mean_to_plot, colour = data_type)) +
+  # 'error bar' around mean fit - 
+  geom_ribbon(data = data_to_plot_test %>% filter(data_type == "Raw"),
+              aes(ymin = mean_to_plot-sd, ymax = mean_to_plot+sd), 
+              position = "identity", stat = "identity", 
+              fill = "grey85", color = "grey85") +
+  # lines for both the mean raw full spectrum and the mean fitted full spectrum
+  geom_line(aes(size = data_type)) + 
+  scale_size_manual(values=c(0.9,0.5)) +
+  
+  # line for Glu - has a bit of an offset 
+  geom_line(data = data_to_plot_test %>% filter(data_type == "Glutamate"),
+            aes(x = ppm, y = mean_to_plot-100), size = 0.9, show.legend = FALSE) +
+  
+  # line for GABA - has a bit of an offset 
+  geom_line(data = data_to_plot_test %>% filter(data_type == "GABA"),
+            aes(x = ppm, y = mean_to_plot-200), size = 0.9, show.legend = FALSE) + 
+  
+  # line for residuals
+  geom_line(data = data_to_plot_test %>% filter(data_type == "Residuals"),
+            aes(x = ppm, y = mean_to_plot + 1000), size = 0.5, show.legend = FALSE) + 
+  
+  # aesthetics
+  scale_colour_manual(values = c("red", "red", "red", "black", "black"),
+                      breaks = c("Fit", "Raw")) +
+  scale_x_reverse(lim=c(4.0, 0.59), 
+                  breaks = scales::pretty_breaks(n = 20),
+                  expand = c(0,0)) +
+  
+  theme_minimal(base_size = 15) +
+  theme_spectra + 
+  guides(fill = guide_legend(), size = guide_legend()) +
+  annotate("text", x = 1.4, y = 125, label = "Glutamate") +
+  annotate("text", x = 1.4, y = 9, label = "GABA") +
+  
+  # title (for formatting see theme_spectra above)
+  ggtitle(label = "Mean raw and fitted spectra") 
+
+spectrum_and_individual_fits
+
+ggsave(spectrum_and_individual_fits, file = "./MRS_QC/raw_fitted_mean_spectrum_residuals_with_GABA_and_Glu_below_1col.tiff",
+       width = 6.92, # 7.5 old, 6.92 for 2 cols, 
+       height = 7.82, # 8.5 old, 7.82 for 2 cols, 
+       units = "in")
+

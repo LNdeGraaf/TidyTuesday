@@ -1,0 +1,129 @@
+---
+title: "Week 43 - Beer awards"
+author: "Louise Martens"
+date: "20-10-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Great American Beer Festival - The Cream of the Hop
+
+Here some text about the data
+
+```{r load_packages, echo = FALSE}
+library(tidyverse)
+library(here)
+library(geofacet)
+
+library(extrafont)
+font_import()
+loadfonts(device = "win")
+
+```
+
+```{r load_data}
+beer_awards <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-20/beer_awards.csv') 
+
+glimpse(beer_awards)
+
+```
+
+Now, I thought it would be nice to try out geom\_facet for a change. States as glasses of beer, stacked bar chart where the white layer on top is the number of gold medals.
+
+Thing is - beer with a lot of foam on top is bad! The foam should represent the number of silver and bronze awards, not golden awards.
+
+What we need to do is get a dataframe with for each state, the number of golden, silver and bronze medals. Silver and bronze should be summed.
+
+So:
+
+| State  | Medal  | N   |
+|--------|--------|-----|
+| State1 | Gold   | x   |
+| State1 | Silver | x   |
+| State1 | Bronze | x   |
+| State2 | Gold   | x   |
+| State2 | Silver | x   |
+| State2 | Bronze | x   |
+
+```{r prepare data for plotting}
+beer <- beer_awards %>% 
+
+  filter(year %in% c(seq(2000, 2020, 1))) %>% 
+   mutate(
+    state = case_when(
+      state == "Ak" ~ "AK",
+      state == "wa" ~ "WA",
+      TRUE ~ state)) %>%
+  
+  mutate_if(is.character, as.factor) %>% 
+
+  group_by(state, medal) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = medal, 
+              values_from = n) %>% 
+  mutate(`Silver or bronze` = rowSums(select(., Bronze, Silver), na.rm = TRUE)) %>% 
+  select(state, Gold, `Silver or bronze`) %>% 
+  pivot_longer(Gold:`Silver or bronze`, names_to = 'medal', values_to = 'number') %>% 
+  mutate(medal = factor(medal),
+         dummy = 1)
+
+dummy_0 = tibble(state = c(levels(beer$state),levels(beer$state)),
+                 medal = c(rep('Gold', each = nlevels(beer$state)), 
+                           rep('Silver or bronze', each = nlevels(beer$state))),
+                 number = 0,
+                 dummy = 0)
+
+dummy_2 = tibble(state = c(levels(beer$state),levels(beer$state)),
+                 medal = c(rep('Gold', each = nlevels(beer$state)), 
+                           rep('Silver or bronze', each = nlevels(beer$state))),
+                 number = 0,
+                 dummy = 2)
+
+beer_for_plot <- beer %>% 
+  rbind(., rbind(dummy_0,
+                 dummy_2))
+```
+
+```{r geo_facet}
+beer_map <- beer_for_plot %>% 
+  ggplot(aes(x = dummy, y = number, fill = medal)) + 
+  geom_col() +
+  scale_fill_manual(values = c('#F0F0F0', '#FECB02')) +
+  theme_classic() +
+  facet_geo(~state, grid = "us_state_grid2") +
+  theme(text = element_text(family = "Bahnschrift", colour = '#156A8F'),
+        plot.title = element_text(size = 20, hjust = 0.5, face = 'bold'),
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
+        plot.caption = element_text(size = 6),
+        strip.text.x = element_text(size = 10, colour = '#005F85'),
+        strip.background = element_blank(),
+        plot.background=element_rect(fill = "#F1E9DF"),
+        panel.background = element_rect(fill = '#F1E9DF'),
+        panel.grid = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        legend.background = element_rect(fill = "#F1E9DF"),
+        legend.title = element_blank(),
+        legend.key.height = unit(c(0.3, 0.7), "in"),
+        legend.key.width = unit(0.5, "in"),
+        legend.position = c(0.9, 0.2)
+        ) +
+  
+  #annotate("rect", xmin = 50, xmax =70, ymin = 0.1, ymax = 20) +
+  labs(title = "\nTHE CREAM OF THE HOP",
+       subtitle = "Awards won at the Great American Beer Festival between 2000-2020\n",
+       caption = "Data source: Great American Beer Festival. Graphic by Louise Martens")
+
+beer_map
+
+
+ggsave('test_beer_map.png',width = 10, height = 7.5, units = 'in')
+```
+
+## 
