@@ -1,0 +1,171 @@
+---
+title: Mobiele telefoonabonnementen in Afrika
+author: ''
+date: '2020-11-12'
+slug: mobiele-telefoons
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-11-12T19:18:09+01:00'
+featured: no
+image: 
+  placement: 2
+  caption: ''
+  focal_point: ''
+  preview_only: yes
+projects: []
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, fig.width = 5, fig.height = 7.5)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(geofacet)
+library(ggtext)
+library(showtext)
+library(here)
+
+font_add_google("Merriweather", "merri")
+font_add_google("Mukta", "mukta")
+
+showtext_auto()
+```
+
+```{r message=FALSE}
+mobile <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-11-10/mobile.csv')
+summary(mobile %>% mutate_if(is.character, as.factor))
+```
+
+```{r standardized_africa, message=FALSE, warning=FALSE}
+mobile_plot <- mobile %>% 
+  filter(continent == "Africa") %>% 
+  group_by(entity) %>% 
+  mutate(z_gdp = scale(gdp_per_cap),
+         z_subs = scale(mobile_subs)) %>% 
+  ungroup() 
+```
+
+```{r fig.height = 6, fig.width = 6}
+ggplot(mobile_plot, aes(x = year)) +
+  geom_point(aes(y = z_gdp), color = "#800D00", alpha = 0.5) +
+  geom_point(aes(y = z_subs), color = "#FFA319", alpha = 0.5) +
+  ylab("") +
+  ylab("") +
+  labs(title = "GDP per capita vs. mobile subscriptions in Africa",
+       subtitle = "Each dot represents a country.") +
+  theme_minimal() +
+  theme(text = element_text(size = 18),
+        plot.title = element_text(size = 20))
+```
+
+```{r message=FALSE}
+africa_grid <- africa_countries_grid1 %>% 
+  mutate(name = recode(name,
+                       "Côte d'Ivoire" = "Cote d'Ivoire",
+                       "Republic of the Congo" = "COG",
+                       "Democratic Republic of the Congo" = "COD",
+                       "Equatorial Guinea" = "GNQ",
+                       "São Tomé and Principe" = "STP",
+                       "Central African Republic" = "CAF"))
+```
+
+```{r}
+mobile_plot <- mobile_plot %>% 
+  mutate(entity = recode(entity, 
+         "Cape Verde" = "Cabo Verde",
+         "Congo" = "COG",
+         "Democratic Republic of Congo" = "COD",
+         "Sao Tome and Principe" = "STP",
+         "Equatorial Guinea" = "GNQ",
+         "Swaziland" = "Eswatini",
+         "Central African Republic" = "CAF"))
+```
+
+```{r warning=FALSE}
+t = 0.75
+plot <- mobile_plot %>% 
+  ggplot() +
+  # GDP area, line and point
+  geom_area(aes(year, z_gdp),
+            fill = "#BC3F33", #800D00
+            alpha = 0.4) +
+  geom_line(aes(year, z_gdp), 
+            color="#BC3F33", 
+            size=0.4*t) +
+  geom_point(aes(x = year, y = z_gdp),
+            size=0.45*t, 
+             color="#BC3F33") +
+  # mobile subscriptions area, line and point
+  geom_area(aes(year, z_subs),
+            fill = "#FFA319", 
+            alpha = 0.4) +
+  geom_line(aes(year, z_subs), 
+            color="#FFA319", 
+            size=0.4*t) +
+  geom_point(aes(x = year, y = z_subs),
+              size=0.45*t, 
+             color="#FFA319") + 
+  # adds more breaks but only a few labels to the x-axis
+  scale_x_continuous(breaks = seq(1990, 2020, 5),
+                     labels = c("'90","", "'00", "", "'10", "", "'20")) +
+  # actual faceting happens here
+  facet_geo(~entity, grid = africa_grid) + 
+  # theme for the subplots
+  theme_classic() +
+  theme(
+        # default font for all text
+        text = element_text(family = "mukta"), 
+        # light grey background 
+        panel.background = element_rect(fill = "grey97"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "grey97"),
+        # fonts, size and color for all text
+        plot.title = element_markdown(color = "#333333", 
+                                      family = "merri", 
+                                      face = "bold", 
+                                      size = 46*t),
+        plot.subtitle = element_markdown(color = "#333333", 
+                                         size = 34*t, 
+                                         padding = unit(c(0.3*t, 0, 0.3*t, 0), "cm")),
+        plot.caption = element_markdown(color = "#333333", 
+                                        size = 20*t, 
+                                        hjust = 1),
+        # aesthetics of the axes - smaller ticks, etc. 
+        axis.text = element_markdown(size = 22*t, 
+                                     color = "#333333"),
+        axis.line = element_line(color = "#333333"),
+        axis.title = element_blank(),
+        axis.ticks.length = unit(0.5*t, "mm"),
+        # aesthetics of the country names
+        strip.text = element_markdown(color = "#333333",
+                                      size = 24*t,
+                                      face = "bold"),
+        strip.background = element_blank(),
+        plot.margin = unit(c(0.6*t, 0.4*t, 0.4*t, 0.4*t), "cm")) +
+
+
+  labs(
+    title = "<span style = 'color:#FFA319;'>Mobile phone subscriptions</span> and 
+  <span style = 'color:#BC3F33;'>per capita GDP\n</span>",
+  subtitle = "Over the last decades, the African mobile market has grown dramatically.\n 
+  Generally, the number of mobile subscriptions increased in line with economic growth. When per capita
+GDP dropped,\n
+the upward trend of mobile phone subscriptions did not decrease. During the past decade however, the proportion of\n
+people with a mobile phone subscription has remained stable or even decreased in some countries.",
+  caption = "<b>Data</b>: OurWorldInData.org | <b>Graphic</b>: Louise de Graaf-Martens\n
+Data is scaled to have the same mean (0) and standard deviation (1)")
+ 
+```
+
+```{r include=FALSE}
+ggsave(filename = here("content", "post", "2020-11-12-mobiele-telefoons", "featured.jpg"),
+       plot = plot,
+       device = "jpg",
+       width = 8*t, height = 11*t, units = "in")  
+```
+
+![](featured.jpg "Mobiele telefoonabonnementen vs per capita GDP in Afrika")
